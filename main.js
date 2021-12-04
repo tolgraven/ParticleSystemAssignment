@@ -1,6 +1,6 @@
 // ----- Start of the assigment ----- //
 
-class ParticleSystem extends PIXI.Container {
+class Particle extends PIXI.Container {
 	constructor() {
 		super();
 		// Set start and duration for this effect in milliseconds
@@ -113,6 +113,8 @@ class Game {
 
 window.onload = function(){
 	window.game = new Game({onload:function(){
-		game.addEffect(new ParticleSystem());
+		let amount = 35;
+		for(let i=0; i < amount; i++)
+			game.addEffect(new Particle());
 	}});
 }
