@@ -44,7 +44,9 @@ class Game {
 	constructor(props) {
 		this.totalDuration = 0;
 		this.effects = [];
-		this.renderer = new PIXI.WebGLRenderer(800,450);
+		this.heightX = 800;
+		this.heightY = 450;
+		this.renderer = new PIXI.WebGLRenderer(this.heightX,this.heightY);
 		document.body.appendChild(this.renderer.view);
 		this.stage = new PIXI.Container();
 		this.loadAssets(props&&props.onload);
