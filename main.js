@@ -6,6 +6,7 @@ class Particle extends PIXI.Container {
 		// Set start and duration for this effect in milliseconds
 		this.start    = 0;
 		this.duration = 750;
+		this.highestSpriteNum = 8;
 		// Create a sprite
 		let sp        = game.sprite("CoinsGold000");
 		// Set pivot to center of said sprite
@@ -16,7 +17,8 @@ class Particle extends PIXI.Container {
 		// Save a reference to the sprite particle
 		this.sp = sp;
 		
-		// second sprite overlay for better smoothness - doesnt work very well tho
+		// second sprite overlay for better smoothness - doesnt make that big 
+		// a visual difference though, so if focus on performance could skip
 		let sp2       = game.sprite("CoinsGold001");
 		sp2.pivot.x    = sp.pivot.x;
 		sp2.pivot.y    = sp.pivot.y;
@@ -46,8 +48,11 @@ class Particle extends PIXI.Container {
 		// slightly spread origin pos, determine amount to move each tick
 		this.startX = game.heightX / 2 + Math.floor(0.035 * game.heightX * this.dirX);
 		this.moveX = Math.floor(0.85 * game.heightX / 2 * this.dirX * Math.random());
+		// slightly lower y origin because we'll be throwing coins upwards
 		this.startY = game.heightY / 1.5 + Math.floor(0.055 * game.heightY * this.dirY);
 		this.moveY = Math.floor(0.85 * game.heightY / 2 * this.dirY * Math.random());
+
+		this.nt = 0.0;
 	}
 	
 	animTick(nt,lt,gt) {
@@ -63,17 +68,19 @@ class Particle extends PIXI.Container {
 
 		// Set a new texture on a sprite particle
 		// depending on scale might loop multiple times
-		let spriteAnimPos = (this.timingScale * nt*8) % 8;
+		let spriteAnimPos = (this.timingScale * nt*this.highestSpriteNum) % this.highestSpriteNum;
 		let texturePos = Math.floor(spriteAnimPos);
+		// take remainder as progress of blending sprites
 		let blendNextAmount = spriteAnimPos - texturePos;
-		let textureNum = (this.spin > 0? texturePos: 8 - texturePos)
+		let textureNum = (this.spin > 0? texturePos: this.highestSpriteNum - texturePos)
 		let num = ("000" + textureNum).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
 		
-		// Animate position. Start slow then speed up (not realistic but looks alright)
+		// Animate position
 		this.sp.x = this.startX + Math.pow(nt, 0.82) * this.moveX;
-		// Y gets a little "toss upwards then fall back"
-		this.sp.y = this.startY + Math.pow(nt, 0.75) * this.moveY - Math.abs(this.moveY) * Math.sin(nt * Math.PI);
+		// Y gets a little "toss upwards then fall back down"
+		this.sp.y = this.startY + Math.pow(nt, 0.75) * this.moveY
+								- Math.abs(this.moveY) * Math.sin(nt * Math.PI);
 		
 		// slightly separate sprites so faster Z aka. scale means in front
 		this.sp.z = this.dirZ;
@@ -83,7 +90,7 @@ class Particle extends PIXI.Container {
 		
 		// Animate alpha. if not moving much, fade in quicker or looks weird...
 		let velocity = 0.5 * (Math.abs(this.dirX) + Math.abs(this.dirY));
-		let alpha = 0.75 * nt + (0.5 * (1.0 - velocity));
+		let alpha = Math.pow(0.9 * nt, 1.2) + (0.4 * (1.0 - velocity));
 		this.sp.alpha = alpha > 1.0? 1.0: alpha;
 		
 		// Animate rotation
@@ -98,10 +105,12 @@ class Particle extends PIXI.Container {
 		this.sp2.rotation = this.sp.rotation;
 		
 		// except for texture - blend in next/previous
-		let textureNum2 = Math.abs((this.spin > 0? texturePos + 1: 8 - texturePos - 1) % 8);
+		let textureNum2 =
+			Math.abs((this.spin > 0? texturePos + 1: this.highestSpriteNum - texturePos - 1)
+							% this.highestSpriteNum);
 		let num2 = ("000" + textureNum2).substr(-3);
 		game.setTexture(this.sp2,"CoinsGold"+num2);
-		this.sp2.alpha = blendNextAmount;
+		this.sp2.alpha = this.sp.alpha * blendNextAmount;
 	}
 }
 
