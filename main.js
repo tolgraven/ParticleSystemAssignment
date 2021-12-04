@@ -15,7 +15,30 @@ class Particle extends PIXI.Container {
 		this.addChild(sp);
 		// Save a reference to the sprite particle
 		this.sp = sp;
+		
+		this.init();
 	}
+
+	init() {
+		this.dirX = 2 * (Math.random() - 0.5);
+		this.dirY = 2 * (Math.random() - 0.5);
+		this.dirZ = 0.5 + 0.5 * (Math.random());
+		let spin = 2 * (Math.random() - 0.5);
+		// looks a bit weird if too little spin so use a floor
+		if(spin > 0.5 || spin < -0.5) this.spin = spin;
+		else if(spin > 0) 						this.spin = 0.5;
+		else 													this.spin = -0.5;
+
+		// controls sprite evolution speed
+		this.timingScale = 0.75 + 1.25 * Math.random();
+
+		// slightly spread origin pos, determine amount to move each tick
+		this.startX = game.heightX / 2 + Math.floor(0.01 * game.heightX * this.dirX);
+		this.moveX = Math.floor(0.85 * game.heightX * this.dirX * Math.random());
+		this.startY = game.heightY / 2 + Math.floor(0.01 * game.heightY * this.dirY);
+		this.moveY = Math.floor(0.85 * game.heightY * this.dirY * Math.random());
+	}
+	
 	animTick(nt,lt,gt) {
 		// Every update we get three different time variables: nt, lt and gt.
 		//   nt: Normalized time in procentage (0.0 to 1.0) and is calculated by
@@ -23,18 +46,33 @@ class Particle extends PIXI.Container {
 		//   lt: Local time in milliseconds, from 0 to this.duration.
 		//   gt: Global time in milliseconds,
 
+		if(this.nt > nt) // reset each iteration
+			this.init();
+		this.nt = nt;
+
 		// Set a new texture on a sprite particle
-		let num = ("000"+Math.floor(nt*8)).substr(-3);
+		// depending on scale might loop multiple times
+		let pos = Math.floor((this.timingScale * nt*8) % 8);
+		let num = ("000"+pos).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
+		
 		// Animate position
-		this.sp.x = 400 + nt*400;
-		this.sp.y = 225 + nt*225;
-		// Animate scale
-		this.sp.scale.x = this.sp.scale.y = nt;
-		// Animate alpha
-		this.sp.alpha = nt;
+		this.sp.x = this.startX + nt*this.moveX;
+		this.sp.y = this.startY + nt*this.moveY;
+		
+		// slightly separate sprites so faster Z doesnt cause clipping
+		this.sp.z = this.dirZ;
+		
+		// Animate scale based on Z speed
+		this.sp.scale.x = this.sp.scale.y = nt * this.dirZ;
+		
+		// Animate alpha. if not moving much, fade in quicker or looks weird...
+		let velocity = 0.5 * (Math.abs(this.dirX) + Math.abs(this.dirY));
+		let alpha = nt + (0.5 * (1.0 - velocity));
+		this.sp.alpha = alpha > 1.0? 1.0: alpha;
+		
 		// Animate rotation
-		this.sp.rotation = nt*Math.PI*2;
+		this.sp.rotation = this.spin * nt*Math.PI*2;
 	}
 }
 
