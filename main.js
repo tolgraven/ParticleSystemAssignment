@@ -16,6 +16,14 @@ class Particle extends PIXI.Container {
 		// Save a reference to the sprite particle
 		this.sp = sp;
 		
+		// second sprite overlay for better smoothness - doesnt work very well tho
+		let sp2       = game.sprite("CoinsGold001");
+		sp2.pivot.x    = sp.pivot.x;
+		sp2.pivot.y    = sp.pivot.y;
+    sp2.blendMode = PIXI.BLEND_MODES.OVERLAY;
+		this.addChild(sp2);
+		this.sp2 = sp2;
+		
 		this.init();
 	}
 
@@ -80,6 +88,20 @@ class Particle extends PIXI.Container {
 		
 		// Animate rotation
 		this.sp.rotation = this.spin * nt*Math.PI*2;
+
+		// our second sprite has identical everything
+		this.sp2.x = this.sp.x;
+		this.sp2.y = this.sp.y;
+		this.sp2.z = this.sp.z + 1;
+		this.sp2.scale.x = this.sp.scale.x;
+		this.sp2.scale.y = this.sp.scale.y;
+		this.sp2.rotation = this.sp.rotation;
+		
+		// except for texture - blend in next/previous
+		let textureNum2 = Math.abs((this.spin > 0? texturePos + 1: 8 - texturePos - 1) % 8);
+		let num2 = ("000" + textureNum2).substr(-3);
+		game.setTexture(this.sp2,"CoinsGold"+num2);
+		this.sp2.alpha = blendNextAmount;
 	}
 }
 
