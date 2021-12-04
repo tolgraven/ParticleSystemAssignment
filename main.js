@@ -72,7 +72,7 @@ class Particle extends PIXI.Container {
 		let texturePos = Math.floor(spriteAnimPos);
 		// take remainder as progress of blending sprites
 		let blendNextAmount = spriteAnimPos - texturePos;
-		let textureNum = (this.spin > 0? texturePos: this.highestSpriteNum - texturePos)
+		let textureNum = (this.spin > 0? texturePos: this.highestSpriteNum - texturePos);
 		let num = ("000" + textureNum).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
 		
