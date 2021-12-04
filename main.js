@@ -20,23 +20,26 @@ class Particle extends PIXI.Container {
 	}
 
 	init() {
+		// random movement scaling factors for xyz
 		this.dirX = 2 * (Math.random() - 0.5);
 		this.dirY = 2 * (Math.random() - 0.5);
 		this.dirZ = 0.5 + 0.5 * (Math.random());
-		let spin = 2 * (Math.random() - 0.5);
+		
+		// spin scaling factor
+		let spin = 2 * (Math.random() - 0.5) * (this.dirX + this.dirY) / 2;
 		// looks a bit weird if too little spin so use a floor
 		if(spin > 0.5 || spin < -0.5) this.spin = spin;
 		else if(spin > 0) 						this.spin = 0.5;
 		else 													this.spin = -0.5;
 
-		// controls sprite evolution speed
-		this.timingScale = 0.75 + 1.25 * Math.random();
+		// individual sprite evolution speed: 0.75 to 2ish (two rotations)
+		this.timingScale = 0.75 + 1.33 * Math.random();
 
 		// slightly spread origin pos, determine amount to move each tick
-		this.startX = game.heightX / 2 + Math.floor(0.01 * game.heightX * this.dirX);
-		this.moveX = Math.floor(0.85 * game.heightX * this.dirX * Math.random());
-		this.startY = game.heightY / 2 + Math.floor(0.01 * game.heightY * this.dirY);
-		this.moveY = Math.floor(0.85 * game.heightY * this.dirY * Math.random());
+		this.startX = game.heightX / 2 + Math.floor(0.035 * game.heightX * this.dirX);
+		this.moveX = Math.floor(0.85 * game.heightX / 2 * this.dirX * Math.random());
+		this.startY = game.heightY / 1.5 + Math.floor(0.055 * game.heightY * this.dirY);
+		this.moveY = Math.floor(0.85 * game.heightY / 2 * this.dirY * Math.random());
 	}
 	
 	animTick(nt,lt,gt) {
@@ -52,23 +55,27 @@ class Particle extends PIXI.Container {
 
 		// Set a new texture on a sprite particle
 		// depending on scale might loop multiple times
-		let pos = Math.floor((this.timingScale * nt*8) % 8);
-		let num = ("000"+pos).substr(-3);
+		let spriteAnimPos = (this.timingScale * nt*8) % 8;
+		let texturePos = Math.floor(spriteAnimPos);
+		let blendNextAmount = spriteAnimPos - texturePos;
+		let textureNum = (this.spin > 0? texturePos: 8 - texturePos)
+		let num = ("000" + textureNum).substr(-3);
 		game.setTexture(this.sp,"CoinsGold"+num);
 		
-		// Animate position
-		this.sp.x = this.startX + nt*this.moveX;
-		this.sp.y = this.startY + nt*this.moveY;
+		// Animate position. Start slow then speed up (not realistic but looks alright)
+		this.sp.x = this.startX + Math.pow(nt, 0.82) * this.moveX;
+		// Y gets a little "toss upwards then fall back"
+		this.sp.y = this.startY + Math.pow(nt, 0.75) * this.moveY - Math.abs(this.moveY) * Math.sin(nt * Math.PI);
 		
-		// slightly separate sprites so faster Z doesnt cause clipping
+		// slightly separate sprites so faster Z aka. scale means in front
 		this.sp.z = this.dirZ;
 		
 		// Animate scale based on Z speed
-		this.sp.scale.x = this.sp.scale.y = nt * this.dirZ;
+		this.sp.scale.x = this.sp.scale.y = Math.pow(nt * 0.9, 1.3) * 0.92 * this.dirZ;
 		
 		// Animate alpha. if not moving much, fade in quicker or looks weird...
 		let velocity = 0.5 * (Math.abs(this.dirX) + Math.abs(this.dirY));
-		let alpha = nt + (0.5 * (1.0 - velocity));
+		let alpha = 0.75 * nt + (0.5 * (1.0 - velocity));
 		this.sp.alpha = alpha > 1.0? 1.0: alpha;
 		
 		// Animate rotation
@@ -153,7 +160,7 @@ class Game {
 
 window.onload = function(){
 	window.game = new Game({onload:function(){
-		let amount = 35;
+		let amount = 40;
 		for(let i=0; i < amount; i++)
 			game.addEffect(new Particle());
 	}});
