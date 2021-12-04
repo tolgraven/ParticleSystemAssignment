@@ -5,7 +5,7 @@ class Particle extends PIXI.Container {
 		super();
 		// Set start and duration for this effect in milliseconds
 		this.start    = 0;
-		this.duration = 500;
+		this.duration = 750;
 		// Create a sprite
 		let sp        = game.sprite("CoinsGold000");
 		// Set pivot to center of said sprite
